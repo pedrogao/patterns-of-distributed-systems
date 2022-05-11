@@ -126,9 +126,9 @@ class TransactionalKVStore…
   }
 ```
 
-## 锁与事务隔离
+### 锁与事务隔离
 
-请求需要在被执行的 key 上加锁。特别是，get 请求加个读锁，put请求加个写锁。读取值时获取读锁。
+请求还会给键值加锁。尤其是，get 请求会加上读锁，而 put 请求则会加写锁。读取值的时候，要去获取读锁。
 
 ```java
 class TransactionalKVStore…
@@ -152,9 +152,9 @@ class TransactionalKVStore…
   }
 ```
 
-节点仅将更新操作挂起，在事务提交时写入。直到当事务即将提交且值在键值存储中可用时才加写锁。
+当事务即将提交，值会在键值存储中变得可见时，才会获取写锁。在此之前，集群节点只能将修改的值当做一个待处理的操作。
 
-这种延迟加锁的方式，减少了事务之间冲突。
+延迟加锁会降低事务冲突的几率。
 
 ```java
 class TransactionalKVStore…
@@ -165,7 +165,7 @@ class TransactionalKVStore…
   }
 ```
 
-需要注意的是，这些锁在请求完成时不会被释放、只有在事务提交时才被释放。这种在事务期间持有锁，并仅在事务提交或回滚时释放的技巧称为 [两阶段锁定(2PL two-phase-locking)](https://en.wikipedia.org/wiki/Two-phase_locking)。两阶段锁定是串行化隔离级(serializable isolation level)的基石。串行化使得同一时间仅执行一个，从而达到事务的效果。
+值得注意的是，这些锁是长期存在的，请求完成之后并不释放。只有事务提交时，才会释放这些锁。这种在事务期间持有锁，仅在事务提交或回滚时释放的技术称为 [两阶段锁定(2PL two-phase-locking)](https://en.wikipedia.org/wiki/Two-phase_locking)。对于提供串行隔离级别（serializable isolation level）而言，两阶段锁定至关重要。串行意味着，事务的效果就像一次一个地执行。
 
 ## 防止死锁
 
