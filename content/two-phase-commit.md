@@ -167,11 +167,13 @@ class TransactionalKVStore…
 
 值得注意的是，这些锁是长期存在的，请求完成之后并不释放。只有事务提交时，才会释放这些锁。这种在事务期间持有锁，仅在事务提交或回滚时释放的技术称为 [两阶段锁定(2PL two-phase-locking)](https://en.wikipedia.org/wiki/Two-phase_locking)。对于提供串行隔离级别（serializable isolation level）而言，两阶段锁定至关重要。串行意味着，事务的效果就像一次一个地执行。
 
-## 防止死锁
+#### 防止死锁
 
-两个事务互相等待对方释放锁会导致死锁。当检测到事务冲突时，不允许等待并立即终止事务即可避免死锁。下面有一些决定能够判断是否终止事务的策略。
+Usage of locks can cause deadlocks where two transactions wait for each other to release the locks. Deadlocks can be avoided if transactions are not allowed to wait and aborted when the conflicts are detected. There are different strategies used to decide which transactions are aborted and which are allowed to continue.
 
-锁管理器(Lock Manager)实现了如下策略：
+如果采用锁，两个事务等待彼此释放锁的场景就可能会引起死锁。检测到冲突时，如果不允许事务等待，立即终止，这样就可以避免死锁。有不同的策略可以决定哪些事务要立即终止，哪些允许继续。
+
+锁管理器（Lock Manager）可以像下面这样实现等待策略（Wait Policy）：
 
 ```java
 class LockManager…
@@ -179,7 +181,7 @@ class LockManager…
   WaitPolicy waitPolicy;
 ```
 
- `WaitPolicy` 决定当请求发生冲突时，应该做什么。
+ `WaitPolicy` 决定在请求发生冲突时要做什么。
 
 ```java
 public enum WaitPolicy {
@@ -189,7 +191,7 @@ public enum WaitPolicy {
 }
 ```
 
-锁是一个对象，它记录了当前拥有锁的事务和等待该锁的事务。
+锁是一个对象，它会记录当前拥有锁的事务，以及和等待该锁的事务。
 
 ```
 class Lock…
@@ -199,7 +201,7 @@ class Lock…
   LockMode lockMode;
 ```
 
-当事务请求获取锁，如果没有冲突，没有事务拥有该锁，则锁管理器会立即将锁授予它。
+当事务请求获取锁时，如果没有冲突的事务已经拥有了该锁，那么锁管理器就会立即将该锁授予它。
 
 ```java
 class LockManager…
@@ -232,7 +234,7 @@ class Lock…
   }
 ```
 
-如果发生冲突，锁管理器将会根据等待策略处理。
+如果发生冲突，锁管理器的行为就取决于等待策略了。
 
 ### 等待策略：Error策略
 
