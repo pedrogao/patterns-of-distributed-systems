@@ -236,9 +236,9 @@ class Lock…
 
 如果发生冲突，锁管理器的行为就取决于等待策略了。
 
-### 等待策略：Error策略
+##### 冲突时抛出错误
 
-如果设置Error策略，冲突将会抛出一个错误，该事务将会回滚并等待一段随机时间后重试。
+如果等待策略是抛出错误（error out），它就会抛出一个错误，调用的事务就会回滚，随机等待一段时间后进行重试。
 
 ```java
 class LockManager…
@@ -264,11 +264,13 @@ class LockManager…
   }
 ```
 
-在冲突较为激烈、许多事务将会尝试获取锁时，如果失败的事务全部终止并重试。将会严重限制系统的吞吐量。数据存储需要确保尽可能少的事务重试。
+在许多用户事务尝试获取锁引发竞争的情况下，如果所有的事务都需要重新启动，就会严重限制系统的吞吐量。数据存储会尝试确保事务重启的次数最少。
 
-一个常用的技巧是给事务分配一个唯一的ID并给它们排序。举个栗子，[Spanner](https://cloud.google.com/spanner)[分配唯一ID](https://dahliamalkhi.github.io/files/SpannerExplained-SIGACT2013b.pdf)以排序事务。这个与[Paxos]()中讨论的跨集群排序请求技术非常相似。一旦事务能够排序，就可以在不重试事务的情况下避免死锁。
+A common technique is to assign a unique ID to transactions and order them. For example, Spanner assigns unique IDs to transactions in such a way that they can be ordered. The technique is very similar to the one discussed in Paxos to order requests across cluster nodes. Once the transactions can be ordered, there are two techniques used to avoid deadlock, but still allow transactions to continue without restarting
 
-事务的引用可以用来排序。一个最简单的方法就是为每一个事务引用分配一个时间戳，并基于时间戳进行比较。
+一种常见的技术是，给事务分配一个唯一 ID，并给它们排序。比如，[Spanner](https://cloud.google.com/spanner)为事务[分配了唯一 ID](https://dahliamalkhi.github.io/files/SpannerExplained-SIGACT2013b.pdf)，这样就可以对它们排序了。这与 [Paxos](paxos.md) 中讨论的跨集群节点排序请求技术非常相似，有两种技术用于避免死锁，但依然要允许事务能够在不重启的情况下继续。
+
+事务引用（transaction reference）的创建方式应该是可以与其它事务的引用进行比较和排序。最简单的方法是给每个事务分配一个时间戳，并根据时间戳进行比较。
 
 ```java
 class TransactionRef…
@@ -278,9 +280,9 @@ class TransactionRef…
   }
 ```
 
-但是在分布式系统中，[时钟并不是单调的](lamport-clock.md)，因此可以为每个事务分配一个唯一ID，以便于排序。除了ID之外，还需追踪每个ID的年龄来给事务排序。[Spanner](https://cloud.google.com/spanner)在系统里通过每个事务的年龄来排序事务。
+但是在分布式系统中，[挂钟时间不是单调的](https://martinfowler.com/articles/patterns-of-distributed-systems/time-bound-lease.html#wall-clock-not-monotonic)，因此，会采用不同的方式给事务分配唯一 ID，保证事务可以排序。除了这些可排序的 ID，还要追踪每个事务的年龄，这样就能对事务排序了。[Spanner](https://cloud.google.com/spanner) 就是通过追踪系统中每个事务的年龄为事务排序。
 
-为了能够排序全部事务，每个集群节点被分配一个唯一的ID。当事务开始时，客户端从他们当中选举出一个协调者，并由协调者生成一个事务ID。作为协调者的集群节点生成事务ID如下所示。
+为了能够对所有的事务排序，每个集群节点都要分配一个唯一 ID。事务开始时，客户端会选择一个协调者，从协调者获取到事务 ID。扮演协调者的集群节点会生成事务 ID，就像下面这样。
 
 ```java
 class TransactionCoordinator…
@@ -321,7 +323,7 @@ class TransactionClient…
   }
 ```
 
-客户端通过开始时间来计算并更新事务年龄。
+客户端会记录事务开始至今流逝的时间，以此作为事务的年龄。
 
 ```java
 class TransactionRef…
@@ -331,7 +333,7 @@ class TransactionRef…
   }
 ```
 
-每当get或者put请求到来时，都会从新计算年龄。事务之间通过年龄来排序，如果不巧两个事务具有相同的年龄，则比较他们的事务ID。
+每当客户端向服务器发起 get 或 put 请求时，都会递增事务的年龄。然后，事务会根据其年龄进行排序。对于同样年龄的事务，则会比较事务 ID。
 
 ```java
 class TransactionRef…
