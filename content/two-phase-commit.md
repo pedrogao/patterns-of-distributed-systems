@@ -236,7 +236,7 @@ class Lock…
 
 如果发生冲突，锁管理器的行为就取决于等待策略了。
 
-##### 冲突时抛出错误
+##### 冲突时抛出错误（Error On Conflict）
 
 如果等待策略是抛出错误（error out），它就会抛出一个错误，调用的事务就会回滚，随机等待一段时间后进行重试。
 
@@ -265,8 +265,6 @@ class LockManager…
 ```
 
 在许多用户事务尝试获取锁引发竞争的情况下，如果所有的事务都需要重新启动，就会严重限制系统的吞吐量。数据存储会尝试确保事务重启的次数最少。
-
-A common technique is to assign a unique ID to transactions and order them. For example, Spanner assigns unique IDs to transactions in such a way that they can be ordered. The technique is very similar to the one discussed in Paxos to order requests across cluster nodes. Once the transactions can be ordered, there are two techniques used to avoid deadlock, but still allow transactions to continue without restarting
 
 一种常见的技术是，给事务分配一个唯一 ID，并给它们排序。比如，[Spanner](https://cloud.google.com/spanner)为事务[分配了唯一 ID](https://dahliamalkhi.github.io/files/SpannerExplained-SIGACT2013b.pdf)，这样就可以对它们排序了。这与 [Paxos](paxos.md) 中讨论的跨集群节点排序请求技术非常相似，有两种技术用于避免死锁，但依然要允许事务能够在不重启的情况下继续。
 
@@ -345,9 +343,9 @@ class TransactionRef…
   }
 ```
 
-### 等待策略：Wound-Wait策略
+### Wound-Wait 策略
 
-在 [Wound-Wait](http://www.mathcs.emory.edu/~cheung/Courses/554/Syllabus/8-recv+serial/deadlock-woundwait.html) 策略中，如果发生冲突，则会比较他们的引用。如果锁的持有者都比等待者年轻，则持有者会被终止。但是如果锁的请求者比持有者更年轻，则请求者会继续等待。
+采用 [Wound-Wait](http://www.mathcs.emory.edu/~cheung/Courses/554/Syllabus/8-recv+serial/deadlock-woundwait.html) 策略，如果发生冲突，请求锁的事务引用将与当前拥有该锁的所有事务进行比较。如果锁的拥有者比请求锁的事务年轻，所有这些事务都会终止。但是，如果请求锁的事务比拥有锁的事务年轻，那它就要继续等待锁了。
 
 ```java
 class Lock…
@@ -375,7 +373,7 @@ class Lock…
   }
 ```
 
-需要注意的是，已经处于两阶段提交的准备状态的事务不会被中止。
+值得注意的一个关键点是，如果拥有锁的事务已经处于两阶段提交的准备状态，它不会中止的。
 
 ### 等待策略：Wait-Die 策略
 
