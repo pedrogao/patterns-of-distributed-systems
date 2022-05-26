@@ -343,7 +343,7 @@ class TransactionRef…
   }
 ```
 
-### Wound-Wait 策略
+### Wound-Wait
 
 采用 [Wound-Wait](http://www.mathcs.emory.edu/~cheung/Courses/554/Syllabus/8-recv+serial/deadlock-woundwait.html) 策略，如果发生冲突，请求锁的事务引用将与当前拥有该锁的所有事务进行比较。如果锁的拥有者比请求锁的事务年轻，所有这些事务都会终止。但是，如果请求锁的事务比拥有锁的事务年轻，那它就要继续等待锁了。
 
@@ -375,37 +375,52 @@ class Lock…
 
 值得注意的一个关键点是，如果拥有锁的事务已经处于两阶段提交的准备状态，它不会中止的。
 
-### 等待策略：Wait-Die 策略
+### Wait-Die
 
- [Wait-Die](http://www.mathcs.emory.edu/~cheung/Courses/554/Syllabus/8-recv+serial/deadlock-waitdie.html) 的工作方式与 [Wound-Wait](http://www.mathcs.emory.edu/~cheung/Courses/554/Syllabus/8-recv+serial/deadlock-woundwait.html) 完全相反。如果锁所有者都比请求锁的事务年轻，那么所有这些事务都将被中止。但是，如果请求该锁的事务比拥有该锁的事务年轻，那么它将等待该锁。
+[Wait-Die](http://www.mathcs.emory.edu/~cheung/Courses/554/Syllabus/8-recv+serial/deadlock-waitdie.html) 方法的工作方式与 [Wound-Wait](http://www.mathcs.emory.edu/~cheung/Courses/554/Syllabus/8-recv+serial/deadlock-woundwait.html) 截然相反。如果锁拥有者都比请求锁的事务都年轻，那该事务就要等待锁。但是，如果请求锁的事务比一部分拥有锁的事务年轻，那么该事务就要终止。
 
 ```java
- class Lock…
-
-  public CompletableFuture<TransactionRef> woundWait(TransactionRef txnRef,
-                                                     String key,
-                                                     LockMode askedLockMode,
-                                                     CompletableFuture<TransactionRef> lockFuture,
-                                                     LockManager lockManager) {
-
-      if (allOwningTransactionsStartedAfter(txnRef) && !anyOwnerIsPrepared(lockManager)) {
-          abortAllOwners(lockManager, key, txnRef);
-          return lockManager.acquire(txnRef, key, askedLockMode, lockFuture);
-      }
-
-      LockRequest lockRequest = new LockRequest(txnRef, key, askedLockMode, lockFuture);
-      lockManager.logger.debug("Adding to wait queue = " + lockRequest);
-      addToWaitQueue(lockRequest);
-      return lockFuture;
-  }
 class Lock…
 
-  private boolean allOwningTransactionsStartedAfter(TransactionRef txn) {
-      return owners.stream().filter(o -> !o.equals(txn)).allMatch(owner -> owner.after(txn));
+  public CompletableFuture<TransactionRef> waitDie(TransactionRef txnRef,
+                                                   String key,
+                                                   LockMode askedLockMode,
+                                                   CompletableFuture<TransactionRef> lockFuture,
+                                                   LockManager lockManager) {
+      if (allOwningTransactionsStartedAfter(txnRef)) {
+          addToWaitQueue(new LockRequest(txnRef, key, askedLockMode, lockFuture));
+          return lockFuture;
+      }
+
+      lockManager.abort(txnRef, key);
+      lockFuture.completeExceptionally(new WriteConflictException(txnRef, key, owners));
+      return lockFuture;
   }
 ```
 
-需要注意的是，已经处于两阶段提交的准备状态的事务不会被中止。
+相比于 Wait-Die 方法，Wound-Wait 机制通常[重启次数更少](http://www.mathcs.emory.edu/~cheung/Courses/554/Syllabus/8-recv+serial/deadlock-compare.html)。因此，像 [Spanner](https://cloud.google.com/spanner)这样的数据存储采纳 [Wound-Wait](http://www.mathcs.emory.edu/~cheung/Courses/554/Syllabus/8-recv+serial/deadlock-woundwait.html)
+
+当事务的所有者释放锁时，等待中的事务会被授予锁。
+
+```java
+class LockManager…
+
+  private void release(TransactionRef txn, String key) {
+      Optional<Lock> lock = getLock(key);
+      lock.ifPresent(l -> {
+          l.release(txn, this);
+      });
+  }
+class Lock…
+
+  public void release(TransactionRef txn, LockManager lockManager) {
+      removeOwner(txn);
+      if (hasWaiters()) {
+          LockRequest lockRequest = getFirst(lockManager.waitPolicy);
+          lockManager.acquire(lockRequest.txn, lockRequest.key, lockRequest.lockMode, lockRequest.future);
+      }
+  }
+```
 
 ## 提交和回滚
 
