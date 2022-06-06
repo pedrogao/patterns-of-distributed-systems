@@ -668,7 +668,7 @@ class TransactionalKVStore…
 
 ### 幂等操作
 
-协调者可能重试准备、提交或回滚请求。所以这些操作必须是[幂等](idempotent-receiver.md)的。
+在网络失效的情况下，协调者可能会对预备、提交或终止的调用进行重试。因此，这些操作需要是[幂等的](idempotent-receiver.md)。
 
 ### 示例场景
 
