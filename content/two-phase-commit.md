@@ -672,13 +672,15 @@ class TransactionalKVStore…
 
 ### 示例场景
 
-#### 原子写
+#### 原子写入
 
-考虑以下场景。Blue 有一辆卡车，Green 有一辆挖土机。卡车和挖土机的可用性和预订状态存储在分布式键值存储中。根据 key 映射到服务器的方式，Blue的卡车和Green的挖土机订单存储在单独的集群节点上。Alice 正试图预订一辆卡车和挖土机。卡车和挖土机要么同时订到，要么同时取消。
+请考虑以下情况。Paula Blue 有一辆卡车，Steven Green 有一台挖掘机。卡车和挖掘机的可用性和预订状态都存储在一个分布式的键值存储中。根据键值映射到服务器的方式，Blue 的卡车和 Green 的挖掘机的预订存储在不同的集群节点上。Alice 正尝试为计划周一开始的建筑工作预订一辆卡车和挖掘机。她需要卡车和挖掘机二者能够同时可用。
 
-预订场景如下所示。
+预订场景的发生过程如下所示。
 
-通过读取 key 'truck_booking_monday' 和 'backhoe_booking_monday', Alice 检查了 Blue 的卡车和 Green 的挖土机。
+Alice checks the availability of Blue's truck and Green's backhoe. by reading the keys ‘truck_booking_monday’ and ‘backhoe_booking_monday’
+
+通过读取'truck_booking_monday'和'backhoe_booking_monday'这两个键值，Alice 可以检查 Blue 的卡车和 Green 的挖掘机的可用性。
 
 ![检查卡车](../image/2pc/blue_get_truck_availability.png)
 <center>检查卡车</center>
@@ -686,14 +688,14 @@ class TransactionalKVStore…
 ![检查挖土机](../image/2pc/blue_get_backhoe_availability.png)
 <center>检查挖土机</center>
 
-如果值为空，则表示可以预定。她预定了卡车和挖土机。重要的是，设置这两个值的操作需要保证原子性，如果出现任何失败，就不能设置任何值。
+如果两个值都为空，就可以预定了。她可以预定卡车和挖掘机。有一点很重要，两个值的设置是原子化的。任何一个失败了，二者都不会设置成功。
 
-提交分为两个阶段。Alice 请求的第一个服务器充当协调者并执行这两个阶段。
+提交分两个阶段进行。Alice 联系的第一个服务器扮演协调者，执行这两个阶段。
 
 ![提交成功](../image/2pc/blue_commit_success.png)
 <center>提交成功</center>
 
-_协调者在序列图中表示为一个独立的参与者，然而协调协调者通常由其中一个服务器担任，因此在实际操作上一个服务器会同时担任两个角色（参与者与协调者）。_
+_在这个协议中，协调者是一个独立的参与者，顺序图中就是如此显示的。然而，其中的一台服务器（Blue 或 Green）会扮演协调者的角色，因此，它会在交互中承担两个角色。_
 
 #### 事务冲突
 
