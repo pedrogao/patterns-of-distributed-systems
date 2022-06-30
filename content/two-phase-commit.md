@@ -678,8 +678,6 @@ class TransactionalKVStore…
 
 预订场景的发生过程如下所示。
 
-Alice checks the availability of Blue's truck and Green's backhoe. by reading the keys ‘truck_booking_monday’ and ‘backhoe_booking_monday’
-
 通过读取'truck_booking_monday'和'backhoe_booking_monday'这两个键值，Alice 可以检查 Blue 的卡车和 Green 的挖掘机的可用性。
 
 ![检查卡车](../image/2pc/blue_get_truck_availability.png)
