@@ -50,9 +50,6 @@ class TransactionClient…
 
 集群中会有一个节点扮演协调者的角色，用以代表客户端去跟踪事务的状态。在一个键值存储中，它通常是存储某个键值对应数据的集群节点。一般而言，选中的是客户端使用的第一个键值对应存储数据的集群节点。
 
-
-Before storing any value, the client communicates with the coordinator to notify it about the start of the transaction. Because the coordinator is one of the cluster nodes storing values, it is picked up dynamically when the client initiates a get or put operation with a specific key.
-
 在存储任何值之前，客户端都会与协调者进行通信，通知它即将开启一个事务。因为协调者同时也是存储值的某个节点，因此，当客户端对特定键值发起 get 或 put 操作时，也会动态地选到它。
 
 ```java
@@ -168,8 +165,6 @@ class TransactionalKVStore…
 值得注意的是，这些锁是长期存在的，请求完成之后并不释放。只有事务提交时，才会释放这些锁。这种在事务期间持有锁，仅在事务提交或回滚时释放的技术称为 [两阶段锁定(2PL two-phase-locking)](https://en.wikipedia.org/wiki/Two-phase_locking)。对于提供串行隔离级别（serializable isolation level）而言，两阶段锁定至关重要。串行意味着，事务的效果就像一次一个地执行。
 
 #### 防止死锁
-
-Usage of locks can cause deadlocks where two transactions wait for each other to release the locks. Deadlocks can be avoided if transactions are not allowed to wait and aborted when the conflicts are detected. There are different strategies used to decide which transactions are aborted and which are allowed to continue.
 
 如果采用锁，两个事务等待彼此释放锁的场景就可能会引起死锁。检测到冲突时，如果不允许事务等待，立即终止，这样就可以避免死锁。有不同的策略可以决定哪些事务要立即终止，哪些允许继续。
 
