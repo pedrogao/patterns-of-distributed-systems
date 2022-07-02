@@ -692,33 +692,33 @@ _在这个协议中，协调者是一个独立的参与者，顺序图中就是�
 
 #### 事务冲突
 
-考虑这样一个场景， Bob 也试图在同一个周一预订一辆卡车和挖掘机来施工。
+考虑这样一个场景，另有一个人 Bob，他 也试图在同一个周一为建筑工作预订一辆卡车和挖掘机。
 
-预订场景如下所示：
+预订场景按照下面的情形进行：
 
-* Alice 和 Bob 都去读key 'truck_booking_monday' 和 'backhoe_booking_monday'
-* 他俩都看到值为空，都觉得可以预定。
-* 他俩都想预定卡车和挖土机。
+* Alice 和 Bob 都去读键值'truck_booking_monday'和'backhoe_booking_monday'
+* 二者都看到值为空，意味着预定。
+* 二者都试图预定卡车和挖掘机。
 
-因为事务是互相冲突的，我们的期望是，仅存在 Alice 或者 Bob 一个人去预定，而不是他们各拿一半。在出现冲突的情况下，需要重新尝试整个流程，他们当然都希望能够继续进行预订。但在任何情况下，预订都不能部分完成。要么两个预订都应该完成，要么两个预订都不完成。
+预期是这样的，Alice 或 Bob 只有一个人能够预定，因为其事务是冲突的。在出现错误的情况下，整个流程需要重试，但愿有一个人能够继续预定。但任何情况下，预定都不应该是部分完成。两个预定要么都完成，要么都不完成。
 
-为了检查是否能够预定，Alice 和 Bob 都发起一个事务，并分别联系 Blue 和 Green 的服务器来检查预定状态。Blue 持有'truck_booking_on_monday' 的读锁，Green持有'backhoe_booking_on_monday' 的读锁。因为读锁是共享的，所以Alice和Bob都可以读取这些值。
+为了检查可用性，Alice 和 Bob 各开启一个事务，分别联系 Blue 和 Green 的服务器检查可用性。Blue 持有"carry_booking_on_monday "这个键值的读锁，Green 持有 "backhoe_booking_on_monday "这个键值的读锁。因为读锁是共享的，所以 Alice 和 Bob 都可以读取这些值。
 
 ![检查卡车可用](../image/2pc/get_truck_availability.png)
 ![检查挖土机可用](../image/2pc/get_backhoe_availability.png)
 
-Alice 和 Bob 发现挖掘机和卡车在周一都能订。所以它们通过向服务器发送put请求来预定。两个服务器都将put请求保存在临时存储中。
+Alice 和 Bob 发现这两个预订在星期一都可用。所以，他们向服务器发送 put 请求进行预订。两台服务器都将 put 请求存放在临时存储中。
 
 ![预定卡车](../image/2pc/reserve_truck.png)
 ![预定挖掘机](../image/2pc/reserve_backhoe.png)
 
-当Alice和Bob决定提交事务时 —— 假设Blue充当协调者 —— 协调者发起两阶段提交协议，并将准备请求发送给自己和Green。
+当 Alice 和 Bob 决定提交事务时——假设 Blue 扮演协调者——协调者出发两阶段提交协议，将准备请求发送给自己和 Green。
 
-对于 Alice 的请求，它试图获取 'truck_booking_on_monday' 的写锁，但无法获得，因为另一个事务获取了一个冲突的读锁。所以Alice的事务在准备阶段失败了。Bob的请求上也是如此。
+对于Alice的请求，它尝试获取键值'truck_booking_on_monday'的写锁，但它得不到，因为另一个事务得到了冲突的写锁。因此，Alice 的事务在准备阶段就失败了。同样的事情也发生在 Bob 的请求中。
 
 ![提交失败](../image/2pc/commit_failure_retry.png)
 
-事务可以通过如下循环重试:
+在一个重试循环中，事务不断重试，像下面这样：
 
 ```java
 class TransactionExecutor…
@@ -741,7 +741,7 @@ class TransactionExecutor…
   }
 ```
 
-Alice和Bob的预订代码示例如下:
+Alice 和 Bob 预订的示例代码如下所示：
 
 ```java
 class TransactionalKVStoreTest…
@@ -770,11 +770,9 @@ class TransactionalKVStoreTest…
   }
 ```
 
-在这种情况下，其中一个事务将最终成功，而另一个将退出。
+在这种情况下，其中一个事务最终会成功，而另一个则会退出。
 
-虽然上述代码很容易实现，但使用了Error Wait策略，会有多个事务重启，从而降低了总吞吐量。
-
-如上一节所述，使用了Wound-Wait策略会减少事务重试。在上面的例子中，在发生冲突的情况下，只有一个事务可能会重新重试，而不是两个事务都重新重试。
+采用 Error Wait 策略，上面的代码虽然容易实现，但会有多次事务重启，降低了整体的吞吐。正如上节所述，采用 Wound-Wait 可以减少事务重启的次数。在上面的例子中，冲突时只有一个事务可能会重启，而非两个都重启。
 
 ### 使用 [有版本的值（Versioned Value）](versioned-value.md)
 
