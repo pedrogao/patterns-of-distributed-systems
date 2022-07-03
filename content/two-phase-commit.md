@@ -776,20 +776,18 @@ class TransactionalKVStoreTest…
 
 ### 使用 [有版本的值（Versioned Value）](versioned-value.md)
 
-冲突给读和写带来了很大的限制，尤其是当事务只读的时候。最理想的情况是：只读的事务可在不持有任何锁的情况下，仍能保证事务中读到的值不会随着并发读写事务而改变。
+冲突会给所有的读和写操作都带来很大的限制，尤其是当事务是只读的时候。最理想的情况是，在不持有任何锁的情况下，只读的事务可以工作，仍能保证事务中读到的值不会随着并发读写事务而改变。
 
-如[有版本的值（Versioned Value）](versioned-value.md)中所述，数据存储通常存储数据的多个版本。版本号通常使用[Lamport 时钟（Lamport Clock）](lamport-clock.md)时间戳。[混合时钟（Hybrid Clock）](hybrid-clock.md)通常用于[MongoDB](https://www.MongoDb.com/)或[CockroachDB](https://www.cockroachlabs.com/docs/stable/)等数据库。
+数据存储一般会存储值的多个版本，就像[有版本的值（Versioned Value）](versioned-value.md)中描述的那样。版本号可以采用遵循 [Lamport 时钟（Lamport Clock）](lamport-clock.md)的时间戳。大多数情况下，像 [MongoDB](https://www.MongoDb.com/) 或 [CockroachDB](https://www.cockroachlabs.com/docs/stable/) 会采用[混合时钟（Hybrid Clock）](hybrid-clock.md)。为了在两阶段提交协议中使用它，诀窍就是每个参与事务的服务器都要发送它可以写入值的时间戳，以此作为对准备请求的响应。协调者会从这些时间戳中选出一个最大值作为提交时间戳，把它和值一起发送。然后，参与服务器把值保存在提交时间戳对应的位置上。这样一来，只读请求就可以在不持有锁的情况下执行，因为它保证了在特定时间戳写入的值是不会改变的。
 
-带版本的值与两阶段提交协议结合使用：在预备阶段，参与事务的每个服务器都向协调者发送它能写入值的时间戳。协调者选择这些时间戳中的最大值作为提交时间戳，并发送给参与者。然后，参与者将值写在该时间戳所对应的位置。因为它保证事务以最大时间戳写入值，旧时间戳所对应的值永远不会改变，所以读请求不需要加锁。
-
-考虑如下的一个简单示例： Philip 正在运行一份报表，需要读时间戳 2 之前的数据。这是一个持有锁的长时间操作，因此直到Philip的工作完成，预订卡车的 Alice 都会被阻塞。使用[有版本的值（Versioned Value）](versioned-value.md), Philip 的 get 请求可以在时间戳 2 上继续，而 Alice 的 booking 在时间戳 4 上继续。
+考虑如下的一个简单示例。Philip 正在运行一份报表，需要读时间戳 2 之前的所有数据。假设这是一个需要持有锁的长时间操作，试图预定卡车的 Alice 就会被阻塞，直到 Philip 的工作完全完成。采用[有版本的值（Versioned Value）](versioned-value.md)，Philip 的 get 请求就是一个只读操作的一部分，它可以在时间戳 2 上继续执行，而 Alice 的预定则在时间戳 4 上继续执行。
 
 ![mvcc读](../image/2pc/mvcc-read.png)
 <center>多版本并发控制读取(MVCC)</center>
 
-需要注意的是，对于存在读写操作的事务，读请求仍然需要获取读锁。
+需要注意的是，如果读请求是读写事务的一部分，它就依然要持有锁。
 
-[Lamport 时钟（Lamport Clock）](lamport-clock.md)实现的示例代码如下所示:
+采用 [Lamport 时钟（Lamport Clock）](lamport-clock.md)的示例代码如下所示:
 
 ```java
 class MvccTransactionalKVStore…
@@ -860,7 +858,7 @@ class MvccTransactionCoordinator…
   }
 ```
 
-然后，所有参与者将在提交时间戳上存取。
+所有参与的集群节点都会在提交时间错的位置上存储键值。
 
 ```java
 class MvccTransactionalKVStore…
