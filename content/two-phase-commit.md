@@ -907,8 +907,6 @@ class MvccTransactionalKVStore…
 
 这里还有一个微妙的问题需要解决。一旦对某个读请求返回了某个给定时间戳的应答，那就不该出现任何比这个时间戳更低的写入。这一点可以通过不同的技术实现。[Google Percolator](https://research.google/pubs/pub36726/) 和受 Percolator 启发的像 [TiKV](https://tikv.org/) 这样的数据存储都会使用一个单独的服务器，称为 Timestamp oracle，它会保证给出单调增长的时间戳。像 [MongoDb](https://www.MongoDb.com/) 或 [CockroachDb](https://www.cockroachlabs.com/docs/stable/) 这样的数据库则采用了[混合时钟（Hybrid Clock）](hybrid-clock.md)，以此保证每个请求都可以将各个服务器上的混合时钟调整到最新。时间戳也会随着每个写入请求增加。最后，提交阶段会从所有参与的服务器中选取最大的时间戳，确保写入总是在前面的读请求之后发生。
 
-It is important to note that, if the client is reading at a timestamp value lower than the one at which server is writing to, it is not an issue. But if the client is reading at a timestamp while the server is about to write at a particular timestamp, then it is a problem. If servers detect that a client is reading at a timestamp which the server might have an in-flight writes (the ones which are only prepared), the servers reject the write. CockroachDB throws error an if a read happens at a timestamp for which there is an ongoing transaction. Spanner reads have a phase where the client gets the time of the last successful write on a particular partition. If a client reads at a higher timestamp, the read requests wait till the writes happen at that timestamp.
-
 值得注意的是，如果客户端读取的时间戳值低于服务器写入的时间戳值，这不是问题。但是，如果客户端正在读取一个时间戳，而服务端正准备在一个特定的时间戳进行写入，那么这就是一个问题了。如果服务端检测到客户端正在读取的一个时间戳，可能存在一个在途的写入（只进行了准备），服务器会拒绝这次写入。对于 [CockroachDB](https://www.cockroachlabs.com/docs/stable/) 而言，如果读取所在的时间戳有一个正在进行的事务，那它就会抛出异常。[Spanner](https://cloud.google.com/spanner) 的读取有一个阶段，客户端会得到某个特定分区上最后一次成功写入的时间。如果客户端在一个较高的时间戳进行读取，那么读取请求就会等待，直到该时间戳的写入完成。
 
 ### 使用[复制日志（Replicated Log）](replicated-log.md)
