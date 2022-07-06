@@ -774,7 +774,7 @@ class TransactionalKVStoreTest…
 
 采用 Error Wait 策略，上面的代码虽然容易实现，但会有多次事务重启，降低了整体的吞吐。正如上节所述，采用 Wound-Wait 可以减少事务重启的次数。在上面的例子中，冲突时只有一个事务可能会重启，而非两个都重启。
 
-### 使用 [有版本的值（Versioned Value）](versioned-value.md)
+### 使用[有版本的值（Versioned Value）](versioned-value.md)
 
 冲突会给所有的读和写操作都带来很大的限制，尤其是当事务是只读的时候。最理想的情况是，在不持有任何锁的情况下，只读的事务可以工作，仍能保证事务中读到的值不会随着并发读写事务而改变。
 
@@ -911,15 +911,19 @@ class MvccTransactionalKVStore…
 
 ### 使用[复制日志（Replicated Log）](replicated-log.md)
 
-使用[复制日志（Replicated Log）](replicated-log.md)能够提升集群的容错。协调者使用复制日志来存储事务日志。
+为了提升容错性，集群节点可以使用[复制日志（Replicated Log）](replicated-log.md)。协调者使用复制日志（Replicated Log）存储事务的日志条目。
 
-考虑到上面一节中的 Alice 和 Bob 的例子，Blue 服务器是一组服务器，Green服务器也是一组。所有预订数据将在一组服务器上复制。作为两阶段提交的一部分，每个请求都会发送给服务器组的 领导。复制是使用[复制日志（Replicated Log）](replicated-log.md)实现的。
+考虑一下上面一节中的 Alice 和 Bob 的例子，Blue 服务器是一组服务器，Green服务器也是一组。所有预订数据都会在一组的服务器上进行复制。两阶段提交中的每个请求都会发送给服务组的领导者。复制是通过[复制日志（Replicated Log）](replicated-log.md)实现的。
 
-客户端与每组服务器的领导通信，只有当客户端决定提交事务时，一组服务器才需要复制，因此复制也属于预备请求。
+客户端与每组服务器的领导者通信。只有在客户端决定提交事务时，复制才是必需的，因此，它也发生在预备请求的过程中。
 
-协调者也将每个状态更改同步到复制的日志中。
+协调者也会将每个状态更改复制到到复制日志中。
 
-在分布式数据存储中，每个集群节点都会有多个分区。每个分区都会维护一个[复制日志（Replicated Log）](replicated-log.md)，当使用[Raft](https://raft.github.io/) 时，它有时被称为[MultiRaft](https://www.cockroachlabs.com/blog/scaling-raft/)。
+In a distributed datastore, each cluster node handles multiple partitions. A Replicated Log is maintained per partition. When Raft is used as part of replication it's sometimes referred to as multi-raft.
+
+在分布式数据存储中，每个集群节点都会处理多个分区。每个分区都会维护一个[复制日志（Replicated Log）](replicated-log.md)。当使用 [Raft](https://raft.github.io/) 时，它有时称为[multi-raft](https://www.cockroachlabs.com/blog/scaling-raft/)。
+
+客户端会与参与事务的每个分区的领导进行通信。
 
 ### 错误处理
 
