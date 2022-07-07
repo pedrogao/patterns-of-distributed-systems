@@ -919,19 +919,17 @@ class MvccTransactionalKVStore…
 
 协调者也会将每个状态更改复制到到复制日志中。
 
-In a distributed datastore, each cluster node handles multiple partitions. A Replicated Log is maintained per partition. When Raft is used as part of replication it's sometimes referred to as multi-raft.
-
 在分布式数据存储中，每个集群节点都会处理多个分区。每个分区都会维护一个[复制日志（Replicated Log）](replicated-log.md)。当使用 [Raft](https://raft.github.io/) 时，它有时称为[multi-raft](https://www.cockroachlabs.com/blog/scaling-raft/)。
 
 客户端会与参与事务的每个分区的领导进行通信。
 
-### 错误处理
+### 失效处理
 
-两段式提交协议很大程度上依赖协调者。直到知道事务的结果之前，参与者都不会放弃已拿到的写锁，集群的节点会一直阻塞。这对协调者提出了很高的要求：
+两段式提交协议很大程度上依赖协调者节点对事务结果的传达。在知晓事务结果之前，单个的集群节点不允许任何其它事务对涉及进行中事务的键值进行写入。集群节点会一直阻塞，直到知晓了事务的结果。这就给协调者提出了一些关键的要求。
 
-即使在进程崩溃的情况下，协调者也需要记住事务的状态。
+即使在进程崩溃的情况下，协调者也要记住事务的状态。
 
-协调者使用[预写日志（Write-Ahead Log）](write-ahead-log.md)记录事务更新。这样即使崩溃，协调者也能恢复并继续工作。
+协调者会使用[预写日志（Write-Ahead Log）](write-ahead-log.md)记录每一次的事务状态更新。这样一来，当协调者崩溃再重启之后，它依然能够继续处理未完成的事务。
 
 ```java
 class TransactionCoordinator…
@@ -955,9 +953,9 @@ class TransactionCoordinator…
   }
 ```
 
-参与者也可能在没有告知协调者的情况下崩溃。
+在向协调者发送提交消息之前，客户端是可以失败的。
 
-协调者会跟踪事务状态的更新时间，如果在配置的时间内事务状态没有发生变化，协调者则会通知参与者回滚。
+事务协调者会跟踪每个事务状态的更新时间。如果在配置的超时期间内未收到任何状态更新，它就会触发事务回滚 。
 
 ```java
 class TransactionCoordinator…
