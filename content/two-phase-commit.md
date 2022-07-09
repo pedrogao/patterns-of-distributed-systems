@@ -993,6 +993,6 @@ class TransactionCoordinator…
 
 ### 示例
 
-像 [CockroachDb](https://www.cockroachlabs.com/docs/stable/)，[MongoDb](https://www.MongoDb.com/)这样的分布式数据库。利用两段式提交实现了跨分区的原子操作。
+像 [CockroachDb](https://www.cockroachlabs.com/docs/stable/)，[MongoDb](https://www.MongoDb.com/)这样的分布式数据库，利用两阶段提交实现了值的跨分区原子性存储。
 
-[Kafka](https://kafka.apache.org/)通过类似两段式提交的方式保证生产消息跨多个分区的原子性。
+[Kafka](https://kafka.apache.org/) 允许跨多分区原子性地生成消息，其实现也类似于两阶段提交。
