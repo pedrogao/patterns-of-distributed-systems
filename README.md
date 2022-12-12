@@ -8,7 +8,9 @@
 
 ### 模式
 
+* 以时钟为限的等待（Clock-Bound Wait）
 * [一致性内核（Consistent Core）](content/consistent-core.md)
+* 新生领导者（Emergent Leader）
 * 固定分区（Fixed Partitions）
 * [追随者读取（Follower Reads）](content/follower-reads.md)
 * [世代时钟（Generation Clock）](content/generation-clock.md)
@@ -17,7 +19,7 @@
 * [高水位标记（High-Water Mark）](content/high-water-mark.md)
 * [混合时钟（Hybrid Clock）](content/hybrid-clock.md)
 * [幂等接收者（Idempotent Receiver）](content/idempotent-receiver.md)
-* 键值与值（Key And Value）
+* 键值范围分区（Key-Range Partitions）
 * [Lamport 时钟（Lamport Clock）](content/lamport-clock.md)
 * [领导者和追随者（Leader and Followers）](content/leader-and-followers.md)
 * [租约（Lease）](content/lease.md)
@@ -27,6 +29,7 @@
 * [复制日志（Replicated Log）](content/replicated-log.md)
 * 批量请求（Request Batch）
 * [请求管道（Request Pipeline）](content/request-pipeline.md)
+* 请求等待列表（Request Waiting List）
 * [分段日志（Segmented Log）](content/segmented-log.md)
 * [单一 Socket 通道（Single Socket Channel）](content/single-socket-channel.md)
 * [单一更新队列（Singular Update Queue）](content/singular-update-queue.md)
