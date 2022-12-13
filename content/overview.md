@@ -6,7 +6,7 @@ https://martinfowler.com/articles/patterns-of-distributed-systems/
 
 分布式系统给软件开发带来了一些特殊的挑战，要求数据有多个副本，且彼此间要保持同步。然而，我们不能保证所有工作节点都能可靠地工作，网络延迟会轻易地造成不一致。尽管如此，许多组织依然要依赖一系列核心的分布式软件来处理数据存储、消息通信、系统管理以及计算能力。这些系统面临着共同的问题，可以采用类似的方案解决。本文将这些方案进行分类，并进一步提炼成模式。通过模式，我们可以认识到如何更好的理解、交流和传授分布式系统设计。
 
-**2020.6.17**
+**2022.9.7**
 
 > Unmesh Joshi
 >
@@ -101,7 +101,11 @@ Quorum 保证了我们拥有足够的数据副本，以拯救一些服务器的�
 
 ## 综合运用——一个分布式系统示例
 
-理解这些模式有什么用呢？接下来，我们就从头构建一个完整的系统，看看这些理解会怎样帮助我们。下面我们以一个共识系统为例。分布式共识，是分布式系统实现的一个特例，它给予了我们强一致性的保证。在常见的企业级系统中，这方面的典型例子是，[Zookeeper](https://zookeeper.apache.org/)、[etcd](https://etcd.io/) 和 [Consul](https://www.consul.io/)。它们实现了诸如 [zab](https://zookeeper.apache.org/doc/r3.4.13/zookeeperInternals.html#sc_atomicBroadcast) 和 [Raft](https://raft.github.io/) 之类的共识算法，提供了复制和强一致性。还有其它一些流行的算法实现共识机制，比如[Paxos](https://en.wikipedia.org/wiki/Paxos_(computer_science))，[Google Chubby](https://research.google/pubs/pub27897/)  把这种算法用在了锁服务、视图戳复制和[虚拟同步（virtual-synchrony）](https://www.cs.cornell.edu/ken/History.pdf)上。简单来说，共识就是指，一组服务器就存储数据达成一致，以决定哪个数据要存储起来，什么时候数据对于客户端可见。
+理解这些模式有什么用呢？接下来，我们就从头构建一个完整的系统，看看这些理解会怎样帮助我们。下面我们以一个共识系统为例。
+
+### 容错的共识
+
+分布式共识，是分布式系统实现的一个特例，它给予了我们强一致性的保证。在常见的企业级系统中，这方面的典型例子是，[Zookeeper](https://zookeeper.apache.org/)、[etcd](https://etcd.io/) 和 [Consul](https://www.consul.io/)。它们实现了诸如 [zab](https://zookeeper.apache.org/doc/r3.4.13/zookeeperInternals.html#sc_atomicBroadcast) 和 [Raft](https://raft.github.io/) 之类的共识算法，提供了复制和强一致性。还有其它一些流行的算法实现共识机制，比如[Paxos](https://en.wikipedia.org/wiki/Paxos_(computer_science))，[Google Chubby](https://research.google/pubs/pub27897/)  把这种算法用在了锁服务、视图戳复制和[虚拟同步（virtual-synchrony）](https://www.cs.cornell.edu/ken/History.pdf)上。简单来说，共识就是指，一组服务器就存储数据达成一致，以决定哪个数据要存储起来，什么时候数据对于客户端可见。
 
 ### 实现共识的模式序列
 
