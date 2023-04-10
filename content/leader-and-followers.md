@@ -170,7 +170,7 @@ class ServerImpl…
   }
 ```
 
-![基于 Zookeeper 的选举](../image/leader-heartbeat.png)
+![基于 Zookeeper 的选举](../image/zookeeper-leader-election.png)
 <center>图4：基于 Zookeeper 的选举</center>
 
 用同样的方式使用类似于 [etcd](https://etcd.io/) 或 [Consul](https://www.consul.io/) 的系统也可以实现领导者选举。
