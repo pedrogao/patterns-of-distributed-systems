@@ -1,5 +1,5 @@
-const { readFileSync, writeFileSync } = require("fs");
-const { join } = require("path");
+import { readFileSync, writeFileSync } from "fs";
+import { join } from "path";
 
 const workDir = process.cwd();
 const readmeFile = join(workDir, "README.md");

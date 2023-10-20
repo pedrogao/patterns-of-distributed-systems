@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": false,
   "scripts": {
+    "docs:nav": "node scripts/gen-navbar.mjs",
     "docs:dev": "vuepress dev .",
     "docs:build": "vuepress build ."
   },
