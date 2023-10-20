@@ -1,4 +1,5 @@
 import { defineUserConfig, defaultTheme } from "vuepress";
+import subNav from "./pattern-nav.json";
 
 export default defineUserConfig({
   lang: "zh-CN",
@@ -19,20 +20,11 @@ export default defineUserConfig({
       },
       {
         text: "概述",
-        link: "/content/overview",
+        link: "/content/overview/",
       },
       {
         text: "模式",
-        children: [
-          {
-            text: "一致性内核（Consistent Core）",
-            link: "/content/consistent-core",
-          },
-          {
-            text: "追随者读取（Follower Reads）",
-            link: "/content/follower-reads",
-          },
-        ],
+        children: subNav,
       },
     ],
   }),
