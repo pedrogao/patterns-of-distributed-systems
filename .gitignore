@@ -1,0 +1,4 @@
+node_modules
+.temp
+.cache
+pnpm-lock.yaml
