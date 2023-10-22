@@ -1,4 +1,5 @@
 {
+  "exclude": ["content", "scripts", "node_modules", "image"],
   "compilerOptions": {
     "esModuleInterop": true,
     "resolveJsonModule": true

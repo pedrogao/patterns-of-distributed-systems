@@ -15,7 +15,7 @@ README.split("\n").forEach((line) => {
 
     const text = line.substring(leftSplit + 1, rightSplit - 1);
     const link =
-      "/" + line.substring(rightSplit + 1, line.length - 1).replace(".md", "/");
+      "/" + line.substring(rightSplit + 1, line.length - 1).replace(".md", "");
     items.push({
       text,
       link,

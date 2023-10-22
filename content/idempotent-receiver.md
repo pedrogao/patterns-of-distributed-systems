@@ -34,7 +34,7 @@ class ConsistentCoreClient…
   }
 ```
 
-当服务器接收到来自客户端的注册请求，它就给客户端分配一个唯一的 ID，如果服务器是一个[一致性内核（Consistent Core）](content/consistent-core.md)，它可以先分配预写日志索引当做客户端标识符。
+当服务器接收到来自客户端的注册请求，它就给客户端分配一个唯一的 ID，如果服务器是一个[一致性内核（Consistent Core）](./consistent-core.md)，它可以先分配预写日志索引当做客户端标识符。
 
 ```java
 class ReplicatedKVStore…

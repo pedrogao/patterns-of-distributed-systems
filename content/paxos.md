@@ -81,7 +81,7 @@ Paxos 是一个难于理解的协议。我们先从一个展示协议典型流�
 
 以弗所（Ephesus）现在向锡兰（Cyrene）发出了一个准备信息。锡兰（Cyrene）曾向雅典（Athens）发出一次承诺，但以弗所（Ephesus）的请求有着更高的世代，所以它优先。锡兰（Cyrene）向以弗所（Ephesus）发回了一个承诺。
 
-[](../image/mfpaxos-c-refuses-a.png!)
+[](../image/mfpaxos-c-refuses-a.png)
 
 锡兰（Cyrene）现在接收到雅典（Athens）的接受请求，但却拒绝了它，因为其世代数已经落后于它对以弗所（Ephesus）的承诺。
 
