@@ -12,6 +12,7 @@ export default defineConfig({
   // https://vitepress.dev/reference/default-theme-config
   themeConfig: {
     logo: "https://martinfowler.com/articles/patterns-of-distributed-systems/card.png",
+    
     nav: [
       {
         text: "主页",
@@ -45,6 +46,10 @@ export default defineConfig({
       message:
         "Released under the MIT License. Forked from dreamhead/patterns-of-distributed-systems",
       copyright: "Copyright © 2023-present pedrogao",
+    },
+
+    search: {
+      provider: "local",
     },
   },
 });

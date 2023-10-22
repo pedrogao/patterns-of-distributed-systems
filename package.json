@@ -9,6 +9,8 @@
     "docs:preview": "vitepress preview"
   },
   "devDependencies": {
-    "vitepress": "1.0.0-rc.22"
+    "@types/vue": "^2.0.0",
+    "vitepress": "1.0.0-rc.22",
+    "vitepress-plugin-comment-with-giscus": "^1.1.9"
   }
 }
