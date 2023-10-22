@@ -83,12 +83,12 @@ class VersionedValue…
 
 下面是一些比较的样例。
 
-||||
-|---|---|---|
-| {blue:2, green:1} | 大于 | {blue:1, green:1}|
-| {blue:2, green:1} | 并存 | {blue:1, green:2}|
-| {blue:1, green:1, red: 1} | 大于 | {blue:1, green:1}|
-| {blue:1, green:1, red: 1} | 并存 | {blue:1, green:1, pink: 1}|
+|                             |      |                              |
+| --------------------------- | ---- | ---------------------------- |
+| `{blue:2, green:1}`         | 大于 | `{blue:1, green:1}`          |
+| `{blue:2, green:1}`         | 并存 | `{blue:1, green:2}`          |
+| `{blue:1, green:1, red: 1}` | 大于 | `{blue:1, green:1}`          |
+| `{blue:1, green:1, red: 1}` | 并存 | `{blue:1, green:1, pink: 1}` |
 
 比较的实现如下：
 
@@ -238,6 +238,7 @@ public void put(String key, VersionedValue value) {
 如下图所示，client1 和 client2 都在尝试写入“name”这个键值。如果 client1 无法写入到 green 这个服务器，green 服务器就会丢掉 client1 写入的值。当 client2 尝试写入但无法连接到 blue 服务器，它就会写入到 green 服务器。“name”这个键值的版本向量就反映出 blue 和 green 两个服务器存在并发写入。
 
 ![在不同副本上的并发更新](../image/vector-clock-concurrent-updates.png)
+
 <center>图 2：在不同副本上的并发更新</center>
 
 因此，当认为版本是并发的时候，基于存储的版本向量对于任何键值都会持有多个版本。
@@ -390,6 +391,7 @@ class ClusterClient…
 考虑如下图所示的场景。两个节点，blue 和 green，都拥有键值“name”对应的值。green 节点有最新的版本，其版本向量为[blue: 1, green:1]。从 blue 和 green 两个副本进行值的读取时，二者可以进行比较，找出哪个节点缺少了最新的版本，然后，向这个集群节点发出一个带有最新版本的更新请求。
 
 ![读取修复](../image/read-repair.png)
+
 <center>图 3：读取修复</center>
 
 ##### 允许同一集群节点并发更新
@@ -399,6 +401,7 @@ class ClusterClient…
 考虑下面这种场景。两个客户端尝试更新同样的键值，第二个客户端会得到一个异常，因为在它的更新请求中传递的版本号是过期的。
 
 ![读取修复](../image/concurrent-update-with-server-versions.png)
+
 <center>图 4：两个客户端并发更新同一键值</center>
 
 像 [riak](https://riak.com/posts/technical/vector-clocks-revisited/index.html?p=9545.html) 这样的数据库会给客户端一些灵活性，允许这样的并发写请求，倾向于不给错误应答。
@@ -424,6 +427,7 @@ class ClusterClient…
 上面提及的场景，第二个客户端出现错误，其运作方式如下：
 
 ![两个客户端并发更新同一键值](../image/concurrent-update-with-client-versions.png)
+
 <center>图 5：两个客户端并发更新同一键值</center>
 
 ###### 点状版本向量
@@ -437,5 +441,3 @@ class ClusterClient…
 [riak](https://riak.com/posts/technical/vector-clocks-revisited/index.html?p=9545.html) 开始采用基于客户端 ID 的版本向量，但是，迁移到基于集群节点的版本向量，最终是点状版本向量。Riak 也支持基于系统时间戳的最后写入胜冲突解决方案。
 
 [cassandra](http://cassandra.apache.org/) 并不使用版本向量，它只支持基于系统时间戳的最后写入胜的冲突解决方案。
-
-
