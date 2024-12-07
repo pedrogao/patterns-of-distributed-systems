@@ -12,7 +12,7 @@ export default defineConfig({
   // https://vitepress.dev/reference/default-theme-config
   themeConfig: {
     logo: "https://martinfowler.com/articles/patterns-of-distributed-systems/card.png",
-    
+
     nav: [
       {
         text: "主页",
@@ -25,6 +25,19 @@ export default defineConfig({
       {
         text: "模式",
         items: subNav,
+      },
+      {
+        text: "模式（新）",
+        items: [
+          {
+            text: "High-Water Mark (高水位标记)",
+            link: "/part2/Chapter 12. High-Water Mark",
+          },
+          {
+            text: "Idempotent Receiver（幂等接收者）",
+            link: "/part2/Chapter 15. Idempotent Receiver",
+          },
+        ],
       },
     ],
 
