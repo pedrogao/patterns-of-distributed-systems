@@ -37,6 +37,10 @@ export default defineConfig({
             text: "Idempotent Receiver（幂等接收者）",
             link: "/part2/Chapter 15. Idempotent Receiver",
           },
+          {
+            text: "Version Vector（版本向量）",
+            link: "/part2/Chapter 18. Version Vector",
+          },
         ],
       },
     ],
