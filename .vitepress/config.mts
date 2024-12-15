@@ -41,6 +41,10 @@ export default defineConfig({
             text: "Version Vector（版本向量）",
             link: "/part2/Chapter 18. Version Vector",
           },
+          {
+            text: "固定分区（Fixed Partitions）",
+            link: "/part3/Chapter 19. Fixed Partitions",
+          },
         ],
       },
     ],
